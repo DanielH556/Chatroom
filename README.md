@@ -1,6 +1,7 @@
 # aps-quinto
 Repositório Base da APS do quinto semestre. 
 
+<<<<<<< HEAD
 # Links úteis para o uso do Github
 Como adicionar arquivos à um repositório
 https://docs.github.com/pt/github/managing-files-in-a-repository/adding-a-file-to-a-repository-using-the-command-line
