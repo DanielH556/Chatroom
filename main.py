@@ -22,7 +22,7 @@ class App(tk.Frame):
 
     self.pfp = PhotoImage(file = "Images/ProfilePicture.png")
 
-    userLb = tk.Button(chatList, text=" Olhelho", height=70, width=230, pady=2, anchor=tk.W, relief="solid", bg="#156950", bd=3, fg="white", activebackground="#1C8767", font=f, image=self.pfp, compound=LEFT)
+    userLb = tk.Button(chatList, text=" Usuário1", height=70, width=230, pady=2, anchor=tk.W, relief="solid", bg="#156950", bd=3, fg="white", activebackground="#1C8767", font=f, image=self.pfp, compound=LEFT)
     userLb.pack()
 #---------------------------------------------------------------------------------------s--------------
     chatBoxCont = tk.Frame(master = root, height=600, width=100, bg="#EAEAEA")
