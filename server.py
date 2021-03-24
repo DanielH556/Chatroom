@@ -1,33 +1,70 @@
 import socket
-from threading import Thread
+import threading
+import os
 
-L=[]
-def ConversaSimultanea(a,b):
-    msg = ""
-    while msg != "Fim":
-        print ("entrou no loop da conversa")
-        msg = L[a].recv(5000)
-        if not msg:
-            break
-        L[b].sendall(msg)
-    clientsocket.close()
+class Servidor(threading.Thread):
+    def __init__(self, host, port): # Método construtor
+        super().__init__()
+        self.host = host
+        self.port = port
+        self.conexoes = []
+    
+    def run(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind((self.host, self.port))
+        s.listen(5)
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-s.bind((socket.gethostname(), 1234))
-s.listen(5)
+        while True:
+            sc, socketNome = s.accept()
+            print('Conexão aceita de {} para {}'.format(sc.getpeername(), sc.getsockname()))
 
-for i in range(2):
-    clientsocket, address = s.accept()
-    print(f"Conexão com {address} foi estabelecida!")
-    L.append(clientsocket)
-    clientsocket.send(bytes("Bem vindo ao servidor", "utf-8"))
-t1=Thread(target=ConversaSimultanea,args=(1,0)).start()
-t2=Thread(target=ConversaSimultanea,args=(0,1)).start()
+            serverSocket = SocketServer(sc, socketNome, self)
+            serverSocket.start()
 
-while True:
-    recebe=clientsocket.recv(1024)
-    print(recebe)
-print("fim de transmissao")
+            self.conexoes.append(serverSocket)
+            print('Pronto para receber mensagens de', sc.getpeername)
 
+    def broadcast(self, msg, src):
+        for conexao in self.conexoes:
+            if conexao.socketNome != src:
+                conexao.send(msg)
 
+class SocketServer(threading.Thread):
+    def __init__(self, sc, socketNome, servidor):
+        super().__init__()
+        self.sc = sc
+        self.socketNome = socketNome
+        self.servidor = servidor
+
+    def run(self):
+        while True:
+            msg = self.sc.recv(1024).decode('ascii')
+            if msg:
+                print('{} disse {!r}'.format(self.socketNome, msg))
+                self.servidor.broadcast(msg, self.socketNome)
+            else:
+                print('{} encerrou a conexão'.format(self.socketNome))
+                self.sc.close()
+                servidor.remove_connection()
+                return
+
+    def send(self, msg):
+        self.sc.sendall(msg.encode('ascii'))
+    
+    def exit(servidor):
+        while True:
+            ipt = input('')
+            if ipt == 'q':
+                print('Encerrando todas as conexões...')
+                for conexao in servidor.conexoes:
+                    conexao.sc.close()
+                print('Desligando o servidor')
+                os._exit(0)
+
+if __name__ == '__main__':
+    servidor = Servidor('', 1234)
+    servidor.start()
+
+    sair = threading.Thread(target = exit, args = (servidor, ))
+    sair.start()
