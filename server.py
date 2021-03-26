@@ -3,12 +3,12 @@ import threading
 import os
 
 class Servidor(threading.Thread):
-    def __init__(self, host, port): # Método construtor
+    def __init__(self, host, port):
         super().__init__()
         self.host = host
         self.port = port
-        self.conexoes = []
-    
+        self.L = []
+
     def run(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -16,55 +16,55 @@ class Servidor(threading.Thread):
         s.listen(5)
 
         while True:
-            sc, socketNome = s.accept()
-            print('Conexão aceita de {} para {}'.format(sc.getpeername(), sc.getsockname()))
+            clientsocket, address = s.accept()
+            print('Conexão com {} foi estabelecida'.format(clientsocket.getpeername()))
 
-            serverSocket = SocketServer(sc, socketNome, self)
+            serverSocket = ServerSocket(clientsocket, address, self)
             serverSocket.start()
 
-            self.conexoes.append(serverSocket)
-            print('Pronto para receber mensagens de', sc.getpeername)
+            self.L.append(serverSocket)
+            print('Pronto para receber mensagens de {}'.format(address))
 
-    def broadcast(self, msg, src):
-        for conexao in self.conexoes:
-            if conexao.socketNome != src:
-                conexao.send(msg)
+    def transmissao(self, msg, src):
+        for connection in self.L:
+            if connection.socket_ != src:
+                connection.enviarMsg(msg)
 
-class SocketServer(threading.Thread):
-    def __init__(self, sc, socketNome, servidor):
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=
+
+class ServerSocket(threading.Thread):
+    def __init__(self, sc, socket_, servidor):
         super().__init__()
         self.sc = sc
-        self.socketNome = socketNome
+        self.socket_ = socket_
         self.servidor = servidor
 
     def run(self):
-        while True:
-            msg = self.sc.recv(1024).decode('ascii')
-            if msg:
-                print('{} disse {!r}'.format(self.socketNome, msg))
-                self.servidor.broadcast(msg, self.socketNome)
-            else:
-                print('{} encerrou a conexão'.format(self.socketNome))
-                self.sc.close()
-                servidor.remove_connection()
-                return
+      while True:
+        msg = self.sc.recv(1024).decode('utf-8')
+        if msg:
+            print('{} -> {}'.format(self.socket_, msg))
+            self.servidor.transmissao(msg, self.socket_)
+        else:
+            print('{} encerrou a conexão'.format(self.socket_))
+            self.sc.close()
+            return
 
-    def send(self, msg):
-        self.sc.sendall(msg.encode('ascii'))
+    def enviarMsg(self, msg):
+        self.sc.sendall(msg.encode('utf-8'))
     
-    def exit(servidor):
+    def sair(servidor):
         while True:
             ipt = input('')
-            if ipt == 'q':
+            if ipt == 'close':
                 print('Encerrando todas as conexões...')
-                for conexao in servidor.conexoes:
-                    conexao.sc.close()
-                print('Desligando o servidor')
+                for c in servidor.L:
+                    c.sc.close()
+                print('Desligando o servidor...')
                 os._exit(0)
 
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=        
+        
 if __name__ == '__main__':
-    servidor = Servidor('', 1234)
-    servidor.start()
-
-    sair = threading.Thread(target = exit, args = (servidor, ))
-    sair.start()
+    server = Servidor(socket.gethostname(), 1234)
+    server.start()

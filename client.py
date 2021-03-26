@@ -1,66 +1,46 @@
 import socket
-import threading
+from threading import Thread
 import os
 
-class Enviar(threading.Thread):
-    def __init__(self, socket_, nome):
-        super().__init__()
-        self.socket_ = socket_
-        self.nome = nome
-    
-    def run(self):
-      while True:
-        msg = input('{}: '.format(self.nome))
+def recebe_mensagens(socket_, username):
+    while True:
+        msg=socket_.recv(1024)
+        if msg:
+            print('\r{}\n{}: '.format(msg.decode('utf-8'), username), end = '')
+        else:
+            print('\nConexão perdida com o servidor!')
+            print('\nSaindo...')
+            socket_.close()
+            os._exit(0)
+
+def envia_mensagens(socket_, username):
+    while True:
+        msg = input('{}: '.format(username))
         if msg.lower() == "fim":
-            self.socket_.sendall('Servidor >>> {} saiu da sala.'.format(self.nome).encode('utf8'))
+            socket_.sendall('Servidor >>> {} saiu da sala.'.format(username).encode('utf-8'))
             break
         else:
-            self.socket_.sendall('{}: {}'.format(self.nome, msg).encode('utf8'))
-        print('\nSaindo...')
-        self.socket_.close()
-        os._exit(0)
+            socket_.sendall('{}: {}'.format(username, msg).encode('utf-8'))
+    print("Envio de mensagens encerrado!")
+    socket_.close()
+    os._exit(0)
 
-class Recebe(threading.Thread):
-    def __init__(self, socket_, nome):
-        super().__init__()
-        self.socket_ = socket_
-        self.nome = nome
-    
-    def run(self):  
-        while True:
-            msg = self.socket_.recv(1024)
-            if msg:
-                print('\r{}\n{}: '.format(msg.decode('ascii'), self.nome), end = '')
-            else:
-                print('\nConexão com o servidor perdida.')
-                print('\nSaindo...')
-                self.socket_.close()
-                os._exit(0)
+def client(h, p):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.connect((h, p))
 
+    username = input('Insira seu nome de usuário: ')
 
-class Client:
-    def __init__(self, host, port):
-        self.host = host
-        self.port = port
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    envia=Thread(target=envia_mensagens,args=(s, username))
+    recebe = Thread(target=recebe_mensagens, args=(s, username))
 
-    def start(self):
-        self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    envia.start()
+    recebe.start()
 
-        print('Tentando se conectar à {}:{}'.format(self.host, self.port))
-        self.s.connect((self.host, self.port))
-        print('Conexão com {} feita com sucesso'.format(self.host, self.port))
+    s.sendall('Servidor >>> {} entrou na sala.'.format(username).encode('utf-8'))
+    print("Online")
+    print('{}: '.format(username), end = '')
 
-        nome = input('Insira seu usuário: ')
-
-        envia = Enviar(self.s, nome)
-        recebe = Recebe(self.s, nome)
-
-        envia.start()
-        recebe.start()
-
-        self.s.sendall('Servidor >>> {} entrou na sala.'.format(nome).encode('ascii'))
-        print('{}: '.format(nome), end = '')
-
-client = Client(socket.gethostname(), 1234)
-client.start()
+Client = Thread(target = client, args =(socket.gethostname(), 1234))
+Client.start()
