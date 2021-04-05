@@ -1,0 +1,10 @@
+(1) socket_ -> variável que representa a conexão com o servidor e outros usuários.
+    recv -> método que retorna a mensagem.
+
+(2) msg.decode('utf-8') -> visto que as mensagens são transmitidas em bits, o método ".decode" decodifica a mensagem para o padrão dentro dos parênteses, ou seja, UTF-8.
+    \r -> juntamente com "\n" cria uma nova linha em serviços de transmissão.
+
+(3) .encode('utf-8') -> Assim como é necessário decodificar a mensagem de bits para utf-8, é necessário codificá-la para bits, e isto é feito com o método ".encode"
+    .sendall() -> método que envia as mensagens independente do tamanho que elas forem. 
+
+(4) Cada usuário é considerado uma thread. A utilização de execução por meio de threads foi necessária para que fosse possível a conexão de mais de um usuário ao servidor.
