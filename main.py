@@ -2,13 +2,15 @@ import tkinter as tk
 from tkinter import *
 from tkinter import font
 from tkinter.font import *
+import socket
 
 class App(tk.Frame):
   # Método construtor que cria e inicia a variável "master" (variável geral do frame) e executa a função FrameConfig
   # a variável e parâmetro "master" referencia o frame geral - a janela toda
-  def __init__(self, master = None):
+  def __init__(self,username,  master = None):
     super().__init__(master)
     self.master = master
+    self.username = username
     self.FrameConfig(master)
 
   # Função que configura e coloca os widgets no frame geral (root)
@@ -53,21 +55,19 @@ class App(tk.Frame):
     msgBoxCont.pack(fill=tk.X, side=tk.BOTTOM)
 
     # Criação e configuração da caixa de input da mensagem pelo usuário
-    self.messageInp = tk.Text(msgBoxCont, bg="#cbcbcb", width=110)
-    self.messageInp.pack(side=tk.LEFT, fill=tk.Y)
+    messageInp = tk.Text(msgBoxCont, bg="#cbcbcb", width=110)
+    messageInp.pack(side=tk.LEFT, fill=tk.Y)
     self.bIcon = PhotoImage(file = "Images/SendIcon.png") # O Ícone de enviar na direita
 
     # Criação e configuração do botão de enviar mensagem
-    self.sendB = tk.Button(msgBoxCont, image=self.bIcon, compound=CENTER, height=80, width=80, bd=0, relief="flat", command=self.sendMessage)
+    self.sendB = tk.Button(msgBoxCont, image=self.bIcon, compound=CENTER, height=80, width=80, bd=0, relief="flat")
     self.sendB.pack()
 #---------------------------------------------------------------------------------------------------------
   # Função que lê a mensagem para poder enviar ao servidor
   def sendMessage(self):
-    self.msgInp = self.messageInp.get('1.0', 'end-1c')
-    event = self.msgInp
-    print(event)
+    print("oi")
 
 # Variáveis para iniciar o frame e os widgets
-root = tk.Tk() # inicia a janela principal
-app = App(master = root) # inicia a classe e define o master como root
-app.mainloop() # a princípio, faz com que a interface seja atualizada sem a necessidade de reiniciar o programa (não entendi direito na prática, eu só reiniciava tudo sempre que mudava algo no código)
+# root = tk.Tk() # inicia a janela principal
+# app = App("Usuário1", master = root) # inicia a classe e define o master como root
+# app.mainloop() # a princípio, faz com que a interface seja atualizada sem a necessidade de reiniciar o programa (não entendi direito na prática, eu só reiniciava tudo sempre que mudava algo no código)

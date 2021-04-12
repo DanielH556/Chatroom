@@ -2,6 +2,7 @@ import socket
 import threading
 import os
 
+
 # Foi necessário a criação de duas classes: uma para a criação e configuração do servidor (classe Servidor) e outra para a criação e configuração do Socket do servidor (classe ServerSocket).
 
 class Servidor(threading.Thread):
@@ -34,8 +35,9 @@ class Servidor(threading.Thread):
     # Função responsável pelo encaminhamento de uma mensagem ao servidor e os outros clientes
     def transmissao(self, msg, src):
         for connection in self.L:
-            if connection.socket_ != src:
-                connection.enviarMsg(msg)
+            #if connection.socket_ != src:
+            connection.enviarMsg(msg)
+
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=
 
