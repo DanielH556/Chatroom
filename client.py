@@ -1,14 +1,10 @@
 import socket
 from threading import Thread
 import os
-import main
 import tkinter as tk
 from tkinter import *
 from tkinter import font
 from tkinter.font import *
-
-
-
 
 # Função responsável por enviar mensagens ao servidor
 def envia_mensagens(event=None):
@@ -21,9 +17,6 @@ def envia_mensagens(event=None):
         s.sendall('Servidor >>> {} saiu da sala.'.format(username).encode('utf-8'))
     else:
         s.sendall('{}: {}'.format(username, msg).encode('utf-8')) # (3)
-
-
-
 
 # Função responsável por receber mensagens do servidor
 def recebe_mensagens():
@@ -40,9 +33,6 @@ def recebe_mensagens():
             print('\nSaindo...')
             s.close() # Fecha a conexão pendente
             os._exit(0) # Fecha o sistema
-
-
-
 
 root = tk.Tk() # inicia a janela principal
 root.title("Chatbox") # Título da janela
@@ -105,31 +95,67 @@ bIcon = PhotoImage(file = "Images/SendIcon.png") # O Ícone de enviar na direita
 sendB = tk.Button(msgBoxCont, image=bIcon, compound=CENTER, height=80, width=80, bd=0, relief="flat", command=envia_mensagens)
 sendB.pack()
 
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def login():
+    global temp_name
+    temp_name = tk.StringVar()
+    def handle_event():
+        temp_name = usernamefield.get()
+        print(temp_name)
+        loginRoot.destroy()
 
+    loginRoot = tk.Tk()
+    loginRoot.geometry('350x200')
+    loginRoot.resizable(False, False)
+    loginRoot.title('Tela de Login')
 
-username = input('Insira seu nome de usuário: ') # Variável que armazena o nome do usuário
+    f = font.Font(size = 25, family='Helvetica')
 
-h = socket.gethostname()
-p = 1234
+    label = tk.Label(master = loginRoot, text = "Tela de login", foreground='black', font=f)
+    label.pack(side=tk.TOP)
 
-# Variável que representa a conexão com o servidor
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    midframe = tk.Frame(master = loginRoot)
+    midframe.pack(fill=tk.X)
 
-# Configuração da conexão com o servidor
-s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-s.connect((h, p))
-# Feedback de quem entrou na sala
-s.sendall('Servidor >>> {} entrou na sala.'.format(username).encode('utf-8'))
-print("Online")
+    tfLabel = tk.Label(master = midframe, text="Insira seu nome de usuário: ", foreground='black')
+    tfLabel.pack(padx=10, pady=35, side=tk.LEFT)
 
-print('{}: '.format(username), end = '')
+    usernamefield = tk.Entry(master = midframe, bg='white', width=25, textvariable=temp_name)
+    usernamefield.pack(padx=2, side=tk.LEFT, ipady=3, fill=tk.X)
 
-recebe = Thread(target=recebe_mensagens)
-recebe.start()
+    submit = tk.Button(master = loginRoot, text = "Enviar", width=20, height=2, command=handle_event)
+    submit.pack(side=tk.BOTTOM, pady=15)
 
+    loginRoot.mainloop()
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#try:
+login()
+def conexao():
+    global username
+    username = temp_name.get()
+    print(username)
 
+    h = socket.gethostname()
+    p = 1234
 
+    global s
+    # Variável que representa a conexão com o servidor
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+    # Configuração da conexão com o servidor
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.connect((h, p))
+    # Feedback de quem entrou na sala
+    s.sendall('Servidor >>> {} entrou na sala.'.format(username).encode('utf-8'))
+    print("Online")
 
-app = main.App(username, master = root) # inicia a classe e define o master como root
-app.mainloop() # a princípio, faz com que a interface seja atualizada sem a necessidade de reiniciar o programa (não entendi direito na prática, eu só reiniciava tudo sempre que mudava algo no código)
+    print('{}: '.format(username), end = '')
+
+    recebe = Thread(target=recebe_mensagens)
+    recebe.start()
+
+    root.mainloop()
+if temp_name != None:
+    conexao()
+# except ConnectionRefusedError:
+#     print("Conexão Recusada. O servidor está fechado.")
