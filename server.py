@@ -2,9 +2,7 @@ import socket
 import threading
 import os
 
-
 # Foi necessário a criação de duas classes: uma para a criação e configuração do servidor (classe Servidor) e outra para a criação e configuração do Socket do servidor (classe ServerSocket).
-
 class Servidor(threading.Thread):
     # Método construtor da classe Servidor. Nela cria-se e instancia-se as variáveis "host", "port" e o array "L" que armazenará os usuários que estiverem na sala.
     def __init__(self, host, port):
@@ -24,13 +22,28 @@ class Servidor(threading.Thread):
         while True:
             # Criação e armazenamento do servidor aceitando o socket do cliente e o seu endereço, armazenando-o na lista "L"
             clientsocket, address = s.accept()
-            print('Conexão com {} foi estabelecida'.format(clientsocket.getpeername()))
+            print('[SERVIDOR] Conexão com {} foi estabelecida'.format(clientsocket.getpeername()))
+
+            filename = clientsocket.recv(1024).decode("utf-8")
+            print(filename)
+            if filename != "" or filename != None:
+                print("[RECV] Filename received.")
+                file = open("server_data/"+filename, "w")
+                clientsocket.sendall("Filename received".encode("utf-8"))
+
+                data = clientsocket.recv(1024).decode("utf-8")
+                print(f"[RECV] File data received")
+                file.write(data)
+                clientsocket.sendall("File data received.".encode("utf-8"))
+
+                print("[SERVIDOR] Closing file")
+                file.close()
 
             serverSocket = ServerSocket(clientsocket, address, self) # Instância da classe "ServerSocket" para definir a conexão do socket do cliente e o endereço ao servidor
             serverSocket.start()
 
             self.L.append(serverSocket)
-            print('Pronto para receber mensagens de {}'.format(address))
+            print('[SERVIDOR] Pronto para receber mensagens de {}'.format(address))
 
     # Função responsável pelo encaminhamento de uma mensagem ao servidor e os outros clientes
     def transmissao(self, msg, src):
@@ -53,13 +66,11 @@ class ServerSocket(threading.Thread):
       while True:
         # Variável que recebe a mensagem do cliente, decodificando-a de bits para UTF-8
         msg = self.sc.recv(1024).decode('utf-8')
-
-        # Condição que verifica se a conexão ainda está feita, se houver uma mensagem recebida, a conexão está ok
         if msg:
             print('{} -> {}'.format(self.socket_, msg)) # Imprime a mensagem recebida
             self.servidor.transmissao(msg, self.socket_) # Executa a função "transmissao" com a variável "msg"
         else:
-            print('{} encerrou a conexão'.format(self.socket_))
+            print('[SERVIDOR] {} encerrou a conexão'.format(self.socket_))
             self.sc.close()
             return
 
