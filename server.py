@@ -10,6 +10,7 @@ class Servidor(threading.Thread):
         self.host = host
         self.port = port
         self.L = []
+        self.isClicked = False
 
     # Função que configura o servidor e é a função chamada quando a classe é instanciada
     def run(self):
@@ -23,21 +24,22 @@ class Servidor(threading.Thread):
             # Criação e armazenamento do servidor aceitando o socket do cliente e o seu endereço, armazenando-o na lista "L"
             clientsocket, address = s.accept()
             print('[SERVIDOR] Conexão com {} foi estabelecida'.format(clientsocket.getpeername()))
-
-            filename = clientsocket.recv(1024).decode("utf-8")
-            print(filename)
-            if filename != "" or filename != None:
-                print("[RECV] Filename received.")
-                file = open("server_data/"+filename, "w")
-                clientsocket.sendall("Filename received".encode("utf-8"))
-
-                data = clientsocket.recv(1024).decode("utf-8")
-                print(f"[RECV] File data received")
-                file.write(data)
-                clientsocket.sendall("File data received.".encode("utf-8"))
-
-                print("[SERVIDOR] Closing file")
-                file.close()
+            if self.isClicked == True:
+                with open('test.txt', "wb") as f:
+                    print("[+] Receiving...")
+                    while True:
+                        data = f.read()
+                        if not data:
+                            print("[+] No data was read")
+                            break
+                        print("[+] Recebendo...")
+                        f.write(data)
+                        print("[+] Escrito no arquivo")
+                        clientsocket.sendall(data)
+                        
+                    f.close()
+                    print("[+] Download Completo")
+                    self.isClicked = False
 
             serverSocket = ServerSocket(clientsocket, address, self) # Instância da classe "ServerSocket" para definir a conexão do socket do cliente e o endereço ao servidor
             serverSocket.start()

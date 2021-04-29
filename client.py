@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import *
 from tkinter import font
 from tkinter.font import *
+from server import Servidor
 
 # Função responsável por enviar mensagens ao servidor
 def envia_mensagens(event=None):
@@ -19,29 +20,37 @@ def envia_mensagens(event=None):
 
 # Função responsável por receber mensagens do servidor
 def recebe_mensagens():
-    chek = 'START_TRANSFER_FILE_NAME#3@41$*='
         # Loop infinito para sempre estar recebendo as mensagens enquanto a conexão com o servidor estiver feita
     while True:
         msg=s.recv(1024).decode('utf-8') # variável que recebe a mensagem do servidor (1)
-        if chek in msg:
         # Condicional que verifica se a conexão ainda está feita com o servidor. ("if msg" e "if msg == True" é a mesma coisa)
-            if msg:
-                # Imprime a mensagem (2)
-                chatBoxCont.insert(tk.END, msg)
-            else:
-                print('\n[CLIENTE] Conexão perdida com o servidor!')
-                print('\n[CLIENTE] Saindo...')
-                s.close() # Fecha a conexão pendente
-                os._exit(0) # Fecha o sistema
+        filename = "BackLog"
+        if msg:
+            # Imprime a mensagem (2)
+            chatBoxCont.insert(tk.END, msg)
+            log = open('server_data/{filename}.txt', "w")
+            log.write(msg)
+        else:
+            print('\n[CLIENTE] Conexão perdida com o servidor!')
+            print('\n[CLIENTE] Saindo...')
+            s.close() # Fecha a conexão pendente
+            os._exit(0) # Fecha o sistema
 
 def uploadFile():
-    file = open("test.txt", "r")
-    data = file.read()
-    s.sendall(data.encode("utf-8"))
-    msg = s.recv(1024).decode("utf-8")
-    print(f"[SERVER]: {msg}")
-
-    s.sendall(data.encode("utf-8"))
+    file = "test.txt"
+    with open(file, "rb") as f:
+        s.send(b'BEGIN')
+        while True:
+            data = f.read()
+            print("[+] Enviando arquivo...", data.decode('utf-8'))
+            s.sendall(data)
+            print("[+] Arquivo Enviado")
+            if not data:
+                print("Breaking from send data", )
+                break
+        s.send(b'ENDED')
+        Servidor.isClicked = True
+    f.close()
 
 root = tk.Tk() # inicia a janela principal
 root.title("Chatbox") # Título da janela
