@@ -1,6 +1,11 @@
 import socket
 import threading
 import os
+import pyaudio
+import wave
+import pickle, struct
+
+BUFFERSIZE = 65536
 
 # Foi necessário a criação de duas classes: uma para a criação e configuração do servidor (classe Servidor) e outra para a criação e configuração do Socket do servidor (classe ServerSocket).
 class Servidor(threading.Thread):
@@ -25,9 +30,10 @@ class Servidor(threading.Thread):
             clientsocket, address = s.accept()
             print('[SERVIDOR] Conexão com {} foi estabelecida'.format(clientsocket.getpeername()))
             if self.isClicked == True:
-                with open('test.txt', "wb") as f:
+                with open('cavalo.mp3', "wb") as f:
                     print("[+] Receiving...")
                     while True:
+                        print("[+] Reading file data...")
                         data = f.read()
                         if not data:
                             print("[+] No data was read")
@@ -40,7 +46,7 @@ class Servidor(threading.Thread):
                     f.close()
                     print("[+] Download Completo")
                     self.isClicked = False
-
+        
             serverSocket = ServerSocket(clientsocket, address, self) # Instância da classe "ServerSocket" para definir a conexão do socket do cliente e o endereço ao servidor
             serverSocket.start()
 
@@ -52,7 +58,6 @@ class Servidor(threading.Thread):
         for connection in self.L:
             #if connection.socket_ != src:
             connection.enviarMsg(msg)
-
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=
 
@@ -67,7 +72,8 @@ class ServerSocket(threading.Thread):
     def run(self):
       while True:
         # Variável que recebe a mensagem do cliente, decodificando-a de bits para UTF-8
-        msg = self.sc.recv(1024).decode('utf-8')
+        
+        msg = self.sc.recv(BUFFERSIZE)
         if msg:
             print('{} -> {}'.format(self.socket_, msg)) # Imprime a mensagem recebida
             self.servidor.transmissao(msg, self.socket_) # Executa a função "transmissao" com a variável "msg"
@@ -78,7 +84,7 @@ class ServerSocket(threading.Thread):
 
     # Função responsável por enviar a mensagem recebida para os outros clientes
     def enviarMsg(self, msg):
-        self.sc.sendall(msg.encode('utf-8'))
+        self.sc.sendall(msg)
     
     # Função responsável por fechar o servidor ao administrador digitar "close" no servidor (não está implementada a princípio)
     def sair(servidor):

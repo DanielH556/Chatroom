@@ -6,6 +6,10 @@ from tkinter import *
 from tkinter import font
 from tkinter.font import *
 from server import Servidor
+import pyaudio
+import wave, struct, pickle
+
+BUFFERSIZE = 65536
 
 # Função responsável por enviar mensagens ao servidor
 def envia_mensagens(event=None):
@@ -22,13 +26,13 @@ def envia_mensagens(event=None):
 def recebe_mensagens():
         # Loop infinito para sempre estar recebendo as mensagens enquanto a conexão com o servidor estiver feita
     while True:
-        msg=s.recv(1024).decode('utf-8') # variável que recebe a mensagem do servidor (1)
+        msg=s.recv(BUFFERSIZE) # variável que recebe a mensagem do servidor (1)
         # Condicional que verifica se a conexão ainda está feita com o servidor. ("if msg" e "if msg == True" é a mesma coisa)
-        filename = "BackLog"
+        filename = "Cheque"
         if msg:
             # Imprime a mensagem (2)
             chatBoxCont.insert(tk.END, msg)
-            log = open('server_data/{filename}.txt', "w")
+            log = open(f'server_data/{filename}.mp3', "wb")
             log.write(msg)
         else:
             print('\n[CLIENTE] Conexão perdida com o servidor!')
@@ -37,19 +41,19 @@ def recebe_mensagens():
             os._exit(0) # Fecha o sistema
 
 def uploadFile():
-    file = "test.txt"
+    file = "cavalo.mp3"
     with open(file, "rb") as f:
-        s.send(b'BEGIN')
         while True:
+            print("[+] Reading file data...")
             data = f.read()
-            print("[+] Enviando arquivo...", data.decode('utf-8'))
+            print("[+] Enviando arquivo...")
             s.sendall(data)
             print("[+] Arquivo Enviado")
             if not data:
                 print("Breaking from send data", )
                 break
-        s.send(b'ENDED')
         Servidor.isClicked = True
+    print("[+] Fechando Arquivo...")
     f.close()
 
 root = tk.Tk() # inicia a janela principal
