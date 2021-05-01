@@ -5,7 +5,7 @@ import pyaudio
 import wave
 import pickle, struct
 
-BUFFERSIZE = 65536
+BUFFERSIZE = 4096
 
 # Foi necessário a criação de duas classes: uma para a criação e configuração do servidor (classe Servidor) e outra para a criação e configuração do Socket do servidor (classe ServerSocket).
 class Servidor(threading.Thread):
@@ -15,6 +15,7 @@ class Servidor(threading.Thread):
         self.host = host
         self.port = port
         self.L = []
+        global isClicked
         self.isClicked = False
 
     # Função que configura o servidor e é a função chamada quando a classe é instanciada
@@ -29,24 +30,7 @@ class Servidor(threading.Thread):
             # Criação e armazenamento do servidor aceitando o socket do cliente e o seu endereço, armazenando-o na lista "L"
             clientsocket, address = s.accept()
             print('[SERVIDOR] Conexão com {} foi estabelecida'.format(clientsocket.getpeername()))
-            if self.isClicked == True:
-                with open('cavalo.mp3', "wb") as f:
-                    print("[+] Receiving...")
-                    while True:
-                        print("[+] Reading file data...")
-                        data = f.read()
-                        if not data:
-                            print("[+] No data was read")
-                            break
-                        print("[+] Recebendo...")
-                        f.write(data)
-                        print("[+] Escrito no arquivo")
-                        clientsocket.sendall(data)
-                        
-                    f.close()
-                    print("[+] Download Completo")
-                    self.isClicked = False
-        
+            
             serverSocket = ServerSocket(clientsocket, address, self) # Instância da classe "ServerSocket" para definir a conexão do socket do cliente e o endereço ao servidor
             serverSocket.start()
 
@@ -72,15 +56,40 @@ class ServerSocket(threading.Thread):
     def run(self):
       while True:
         # Variável que recebe a mensagem do cliente, decodificando-a de bits para UTF-8
-        
-        msg = self.sc.recv(BUFFERSIZE)
-        if msg:
-            print('{} -> {}'.format(self.socket_, msg)) # Imprime a mensagem recebida
-            self.servidor.transmissao(msg, self.socket_) # Executa a função "transmissao" com a variável "msg"
+        if self.servidor.isClicked:
+            print("[+] File Manipulation Section")
+            msg = self.sc.recv(BUFFERSIZE)
+            if msg:
+                print("[+] Broadcasting file data...")
+                with open('videoplayback.mp4', "wb") as f:
+                    print("[+] Receiving...")
+                    while True:
+                        print("[+] Reading file data...")
+                        data = f.read()
+                        if not data:
+                            print("[+] No data was read")
+                            break
+                        print("[+] Recebendo...")
+                        print("Writing data...")
+                        f.write(data)
+                        print("[+] Escrito no arquivo")
+                        self.sc.sendall(data)
+                    f.close()
+                    print("[+] Download Completo")
+                    self.isClicked = False
+            else:
+                print("[+] Connection Lost")
+                self.sc.close()
+                return
         else:
-            print('[SERVIDOR] {} encerrou a conexão'.format(self.socket_))
-            self.sc.close()
-            return
+            msg = self.sc.recv(BUFFERSIZE)
+            if msg:
+                print('{} -> {}'.format(self.socket_, msg)) # Imprime a mensagem recebida
+                self.servidor.transmissao(msg, self.socket_) # Executa a função "transmissao" com a variável "msg"
+            else:
+                print('[SERVIDOR] {} encerrou a conexão'.format(self.socket_))
+                self.sc.close()
+                return
 
     # Função responsável por enviar a mensagem recebida para os outros clientes
     def enviarMsg(self, msg):

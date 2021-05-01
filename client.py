@@ -9,7 +9,11 @@ from server import Servidor
 import pyaudio
 import wave, struct, pickle
 
-BUFFERSIZE = 65536
+BUFFERSIZE = 4096
+FILESIZE = os.path.getsize('samplevideo.mp4')
+
+global upl
+upl = False
 
 # Função responsável por enviar mensagens ao servidor
 def envia_mensagens(event=None):
@@ -26,14 +30,33 @@ def envia_mensagens(event=None):
 def recebe_mensagens():
         # Loop infinito para sempre estar recebendo as mensagens enquanto a conexão com o servidor estiver feita
     while True:
+        print("Receiving message...")
         msg=s.recv(BUFFERSIZE) # variável que recebe a mensagem do servidor (1)
         # Condicional que verifica se a conexão ainda está feita com o servidor. ("if msg" e "if msg == True" é a mesma coisa)
-        filename = "Cheque"
+        filename = "Video"
         if msg:
-            # Imprime a mensagem (2)
-            chatBoxCont.insert(tk.END, msg)
-            log = open(f'server_data/{filename}.mp3', "wb")
-            log.write(msg)
+            global upl
+            print("Printing Message...")
+            if upl is False:
+                # Imprime a mensagem (2)
+                chatBoxCont.insert(tk.END, msg)
+            if upl:
+                print(upl)
+                print("Creating file...")
+                with open(f'server_data/{filename}.mp4', "wb") as log:
+                    while True:
+                        if not msg:
+                            print("Breaking loop")
+                            break
+                        print("Writing the file...")
+                        log.write(msg)
+                        msg = s.recv(BUFFERSIZE)
+                    print("Exited While loop")
+                log.close()
+                print("Log closed. Changing upl boolean...")
+                chatBoxCont.insert(tk.END, "Arquivo Enviado!")
+                upl = changeClicked(upl)
+                print("After everything: ",upl)
         else:
             print('\n[CLIENTE] Conexão perdida com o servidor!')
             print('\n[CLIENTE] Saindo...')
@@ -41,7 +64,7 @@ def recebe_mensagens():
             os._exit(0) # Fecha o sistema
 
 def uploadFile():
-    file = "cavalo.mp3"
+    file = "videoplayback.mp4"
     with open(file, "rb") as f:
         while True:
             print("[+] Reading file data...")
@@ -53,8 +76,23 @@ def uploadFile():
                 print("Breaking from send data", )
                 break
         Servidor.isClicked = True
+        print("Changing upl boolean value...")
+        global upl
+        upl = changeClicked(upl)
+        print(upl)
     print("[+] Fechando Arquivo...")
     f.close()
+
+
+def changeClicked(isClicked):
+    if isClicked == True:
+        upl = False
+        print("upl is now False")
+    elif isClicked == False:
+        upl = True
+        print("isClicked is now True")
+
+    return upl
 
 root = tk.Tk() # inicia a janela principal
 root.title("Chatbox") # Título da janela
