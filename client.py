@@ -1,3 +1,4 @@
+from ftpserver import FTP_HOST, FTP_PORT
 import socket
 from threading import Thread
 import os
@@ -5,15 +6,14 @@ import tkinter as tk
 from tkinter import *
 from tkinter import font
 from tkinter.font import *
-from server import Servidor
-import pyaudio
-import wave, struct, pickle
+from tkinter import filedialog
+from ftplib import FTP
+import re
+
+FTP_HOST = '192.168.15.141'
+FTP_PORT = 21
 
 BUFFERSIZE = 4096
-FILESIZE = os.path.getsize('samplevideo.mp4')
-
-global upl
-upl = False
 
 # Função responsável por enviar mensagens ao servidor
 def envia_mensagens(event=None):
@@ -23,8 +23,64 @@ def envia_mensagens(event=None):
     # Se o usuário enviar uma mensagem dizendo "fim", o usuário sai da sala.
     if msg.lower() == "fim":
         s.sendall('[SERVIDOR] {} saiu da sala.'.format(username).encode('utf-8'))
+    elif msg.lower() == "receber_arquivo":
+        recebe_arquivo()
     else:
         s.sendall('{}: {}'.format(username, msg).encode('utf-8')) # (3)
+
+def envia_arquivo(event=None): #thi- envia arquivos utilizando FDP
+    # try:
+        print('[+] Iniciando sessão (envio)...')
+        session = FTP(FTP_HOST, user='saet', passwd='aps')
+        session.login()
+        print(session.pwd())
+        session.cwd('server_data')
+        print('[+] Sessão concluída')
+
+        file= filedialog.askopenfile()
+        print('[+] File: ',file)
+
+        filepath_str = str(file).split(' ')
+        print('[+] Filepath as string: ',filepath_str)
+
+        filepath_str2 = filepath_str[1].split('=')
+        print('[+] Filepath str 2: ',filepath_str2)
+
+        filename_list = filepath_str2[1].split('/')
+        print('[+] Filename list: ', filename_list)
+
+        filename_p1 = filename_list[-1].split()
+        print('Filename_p1: ', filename_p1)
+
+        global filename
+        filename = filename_p1[0]
+        print('[+] Filename: ',filename)
+
+        aaaa = filepath_str2[1].strip('"')
+        print('[+] yea: ',aaaa)
+
+        with open(aaaa.strip("'"), 'rb') as f:
+            session.storbinary('STOR '+filename.strip("'"), f)
+        f.close()
+        # session.retrlines('LIST')
+        session.quit()
+        s.sendall('{}: {}'.format(username, "Arquivo enviado").encode('utf-8'))
+    # except Exception as e:
+    #     print('Erro encontrado: ', e)
+
+def recebe_arquivo(event=None):
+    print('[+] Iniciando sessão (receber)...')
+    session = FTP(FTP_HOST, user='saet', passwd='aps')
+    session.login()
+    print(session.pwd())
+    session.cwd('server_data')
+    print('[+] Sessão concluída')
+    filenamerecv = filename
+    with open(filenamerecv.strip("'"), "wb") as f:
+        session.retrbinary(f"RETR {filename}", f.write)
+    f.close()
+    session.quit()
+    s.sendall('{}: {}'.format(username, "Arquivo recebido").encode('utf-8'))
 
 # Função responsável por receber mensagens do servidor
 def recebe_mensagens():
@@ -33,66 +89,24 @@ def recebe_mensagens():
         print("Receiving message...")
         msg=s.recv(BUFFERSIZE) # variável que recebe a mensagem do servidor (1)
         # Condicional que verifica se a conexão ainda está feita com o servidor. ("if msg" e "if msg == True" é a mesma coisa)
-        filename = "Video"
+        
         if msg:
-            global upl
+           
             print("Printing Message...")
-            if upl is False:
-                # Imprime a mensagem (2)
-                chatBoxCont.insert(tk.END, msg)
-            if upl:
-                print(upl)
-                print("Creating file...")
-                with open(f'server_data/{filename}.mp4', "wb") as log:
-                    while True:
-                        if not msg:
-                            print("Breaking loop")
-                            break
-                        print("Writing the file...")
-                        log.write(msg)
-                        msg = s.recv(BUFFERSIZE)
-                    print("Exited While loop")
-                log.close()
-                print("Log closed. Changing upl boolean...")
-                chatBoxCont.insert(tk.END, "Arquivo Enviado!")
-                upl = changeClicked(upl)
-                print("After everything: ",upl)
+            
+            # Imprime a mensagem (2)
+
+            chatBoxCont.insert(tk.END, msg)
+            
         else:
             print('\n[CLIENTE] Conexão perdida com o servidor!')
             print('\n[CLIENTE] Saindo...')
             s.close() # Fecha a conexão pendente
             os._exit(0) # Fecha o sistema
 
-def uploadFile():
-    file = "videoplayback.mp4"
-    with open(file, "rb") as f:
-        while True:
-            print("[+] Reading file data...")
-            data = f.read()
-            print("[+] Enviando arquivo...")
-            s.sendall(data)
-            print("[+] Arquivo Enviado")
-            if not data:
-                print("Breaking from send data", )
-                break
-        Servidor.isClicked = True
-        print("Changing upl boolean value...")
-        global upl
-        upl = changeClicked(upl)
-        print(upl)
-    print("[+] Fechando Arquivo...")
-    f.close()
 
 
-def changeClicked(isClicked):
-    if isClicked == True:
-        upl = False
-        print("upl is now False")
-    elif isClicked == False:
-        upl = True
-        print("isClicked is now True")
 
-    return upl
 
 root = tk.Tk() # inicia a janela principal
 root.title("Chatbox") # Título da janela
@@ -157,7 +171,7 @@ sendB.pack(side=tk.RIGHT)
 
 plusbtn = font.Font(size = 20, family="Helvetica")
 
-fileUpload = tk.Button(msgBoxCont, text="+", height=20, width=15, bd=0, relief="flat", font=plusbtn, command=uploadFile)
+fileUpload = tk.Button(msgBoxCont, text="+", height=20, width=15, bd=0, relief="flat", font=plusbtn, command=envia_arquivo)
 fileUpload.pack(side=tk.LEFT)
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -176,7 +190,7 @@ def enterChat():
     if username != "":
         loginRoot.destroy()
         h = socket.gethostname()
-        p = 1234
+        p = 8080
 
         # Variável que representa a conexão com o servidor
         global s

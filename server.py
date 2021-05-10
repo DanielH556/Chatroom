@@ -1,11 +1,12 @@
 import socket
 import threading
 import os
-import pyaudio
-import wave
-import pickle, struct
+import ftplib as ftp
 
 BUFFERSIZE = 4096
+
+ftp.login=('saet')
+ftp.password=('aps') #thi-ftp pede login e senha
 
 # Foi necessário a criação de duas classes: uma para a criação e configuração do servidor (classe Servidor) e outra para a criação e configuração do Socket do servidor (classe ServerSocket).
 class Servidor(threading.Thread):
@@ -15,8 +16,7 @@ class Servidor(threading.Thread):
         self.host = host
         self.port = port
         self.L = []
-        global isClicked
-        self.isClicked = False
+        
 
     # Função que configura o servidor e é a função chamada quando a classe é instanciada
     def run(self):
@@ -26,6 +26,7 @@ class Servidor(threading.Thread):
         s.bind((self.host, self.port)) # Linha em que é atribuído o endereço e a porta do host para o servidor.
         s.listen(5) # Comando que possibilita que o servidor aceite novos usuários na sala
 
+        print(socket.gethostname())
         while True:
             # Criação e armazenamento do servidor aceitando o socket do cliente e o seu endereço, armazenando-o na lista "L"
             clientsocket, address = s.accept()
@@ -56,44 +57,19 @@ class ServerSocket(threading.Thread):
     def run(self):
       while True:
         # Variável que recebe a mensagem do cliente, decodificando-a de bits para UTF-8
-        if self.servidor.isClicked:
-            print("[+] File Manipulation Section")
-            msg = self.sc.recv(BUFFERSIZE)
-            if msg:
-                print("[+] Broadcasting file data...")
-                with open('videoplayback.mp4', "wb") as f:
-                    print("[+] Receiving...")
-                    while True:
-                        print("[+] Reading file data...")
-                        data = f.read()
-                        if not data:
-                            print("[+] No data was read")
-                            break
-                        print("[+] Recebendo...")
-                        print("Writing data...")
-                        f.write(data)
-                        print("[+] Escrito no arquivo")
-                        self.sc.sendall(data)
-                    f.close()
-                    print("[+] Download Completo")
-                    self.isClicked = False
-            else:
-                print("[+] Connection Lost")
-                self.sc.close()
-                return
+        msg = self.sc.recv(BUFFERSIZE)
+        if msg:
+            print('{} -> {}'.format(self.socket_, msg)) # Imprime a mensagem recebida
+            self.servidor.transmissao(msg, self.socket_) # Executa a função "transmissao" com a variável "msg"
         else:
-            msg = self.sc.recv(BUFFERSIZE)
-            if msg:
-                print('{} -> {}'.format(self.socket_, msg)) # Imprime a mensagem recebida
-                self.servidor.transmissao(msg, self.socket_) # Executa a função "transmissao" com a variável "msg"
-            else:
-                print('[SERVIDOR] {} encerrou a conexão'.format(self.socket_))
-                self.sc.close()
-                return
+            print('[SERVIDOR] {} encerrou a conexão'.format(self.socket_))
+            self.sc.close()
+            return
 
     # Função responsável por enviar a mensagem recebida para os outros clientes
     def enviarMsg(self, msg):
         self.sc.sendall(msg)
+        
     
     # Função responsável por fechar o servidor ao administrador digitar "close" no servidor (não está implementada a princípio)
     def sair(servidor):
@@ -110,5 +86,5 @@ class ServerSocket(threading.Thread):
 # Esse "if" faz o papel do método main do java. Neste caso, está basicamente instanciando e iniciando a classe Servidor como uma Thread (definida nos parâmetros da classe - class Servidor(threading.Thread))  
 if __name__ == '__main__':
     # os parâmetros do servidor está sendo colocado o endereço do host (nome do host) e a porta (1234)
-    server = Servidor(socket.gethostname(), 1234)
+    server = Servidor('192.168.15.141', 8080)
     server.start()
