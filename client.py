@@ -127,13 +127,21 @@ chatList.pack(fill = tk.Y, side=tk.LEFT)
 # Configuração da fonte utilizada
 f = font.Font(family="Helvetica", size=20)
 f2 = font.Font(family="Helvetica", size=15)
+f3 = font.Font(family="Helvetica", size=12)
 
 # Imagem de perfil dos usuários (literalmente visual pra charme)
 pfp = PhotoImage(file = "Images/ProfilePicture.png")
 
 # Botão de cada usuário na lista para mudar o chat
-userLb = tk.Button(chatList, text="Grupo de Chat", height=70, width=230, pady=2, anchor=tk.W, relief="solid", bg="#156950", bd=3, fg="white", activebackground="#1C8767", font=f2, image=pfp, compound=LEFT)
+userLb = tk.Button(chatList, text="Tratamento Rio", height=70, width=230, pady=2, anchor=tk.W, relief="solid", bg="#156950", bd=3, fg="white", activebackground="#1C8767", font=f2, image=pfp, compound=LEFT)
 userLb.pack()
+
+corpIcon = tk.PhotoImage(file = "Images/corpIcon.png")
+corpL = tk.Label(chatList, image=corpIcon, bg="#156950")
+corpL.pack(side = tk.BOTTOM)
+
+name = tk.Label(chatList, text = "Companhia de Tratamento de Rios", bg = "#156950", fg="white", font=f3)
+name.pack(side = tk.BOTTOM)
 
 #-----------------------------------------------------------------------------------------------------
 
@@ -142,7 +150,7 @@ upperBar = tk.Frame(root, height=80, bg="#08382a", padx=10, pady=10)
 upperBar.pack(fill=tk.X, side=TOP)
 
 # Criação e configuração do nome do usuário do chat atual
-currentUser = tk.Label(upperBar, text="Grupo de Chat", font=f, bg="#08382a", fg="white")
+currentUser = tk.Label(upperBar, text="Tratamento Rio", font=f, bg="#08382a", fg="white")
 currentUser.pack(fill=tk.BOTH, side=tk.LEFT)
 
 #-----------------------------------------------------------------------------------------------------
