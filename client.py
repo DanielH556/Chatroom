@@ -14,7 +14,7 @@ FTP_HOST = '192.168.15.141'
 FTP_PORT = 21
 
 BUFFERSIZE = 4096
-
+filename = ""
 # Função responsável por enviar mensagens ao servidor
 def envia_mensagens(event=None):
     #while True:
@@ -75,9 +75,10 @@ def recebe_arquivo(event=None):
     print(session.pwd())
     session.cwd('server_data')
     print('[+] Sessão concluída')
-    filenamerecv = filename
-    with open(filenamerecv.strip("'"), "wb") as f:
-        session.retrbinary(f"RETR {filename}", f.write)
+    session.retrlines('NLST')
+    filename = session.nlst()
+    with open(filename[-1], "wb") as f:
+        session.retrbinary(f"RETR {filename[-1]}", f.write)
     f.close()
     session.quit()
     s.sendall('{}: {}'.format(username, "Arquivo recebido").encode('utf-8'))
@@ -197,7 +198,7 @@ def enterChat():
 
     if username != "":
         loginRoot.destroy()
-        h = socket.gethostname()
+        h = '192.168.15.141'
         p = 8080
 
         # Variável que representa a conexão com o servidor
